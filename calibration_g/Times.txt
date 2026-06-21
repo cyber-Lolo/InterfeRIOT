@@ -1,0 +1,10 @@
+
+  "ExposureTime-ms":  1000,
+  "Xi":  1,
+  "Xf":  2688,
+  "Yi":  1,
+  "Yf":  2200,
+  "Binning":  1,
+  "Filename": "Retiga_000000001.tif",
+  "ElapsedTime-ms":  0,
+  "AbsoluteTime":  18/12/2025 15:40:19,
