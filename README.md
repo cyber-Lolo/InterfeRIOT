@@ -33,7 +33,7 @@ The repository combines:
 
 ## Software
 
-- MMVII
+- MMVII (https://github.com/micmac-V2/MMVII)
 - Python ≥ 3.9
 
 ## Python Packages
