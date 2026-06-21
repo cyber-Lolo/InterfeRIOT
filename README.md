@@ -1,7 +1,7 @@
 # InterfeRIOT
 ## Interferometric Refractive Index and Optical Thickness Analysis from Surface Force Balance Fringe Data
 
-InterfeRIOT is a complete workflow for processing Surface Force Balance (SFB) interferograms, from raw images to calibrated wavelengths, refractive index determination, optical thickness reconstruction, and separation analysis. If you use this code, please cite the paper "*Optical mapping of phases and phase boundaries in nanoconfined fluids* Lauriane Pierrot Deseilligny, Susan Perkin" (doi)
+InterfeRIOT is a complete workflow for processing Surface Force Balance (SFB) interferograms, from raw images to calibrated wavelengths, refractive index determination, optical thickness reconstruction, and separation analysis. If you use this code, please cite the paper "*Optical mapping of phases and phase boundaries in nanoconfined fluids*, Lauriane Pierrot Deseilligny, Susan Perkin" (doi)
 
 The repository combines:
 
