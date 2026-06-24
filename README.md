@@ -1,14 +1,14 @@
 # InterfeRIOT
 ## Interferometric Refractive Index and Optical Thickness Analysis from Surface Force Balance Fringe Data
 
-InterfeRIOT is a complete workflow for processing Surface Force Balance (SFB) interferograms, from raw images to calibrated wavelengths, refractive index determination, optical thickness reconstruction, and separation analysis. If you use this code, please cite the paper "*Optical mapping of phases and phase boundaries in nanoconfined fluids*, Lauriane Pierrot Deseilligny, Susan Perkin" (doi)
+InterfeRIOT is a workflow for processing Surface Force Balance (SFB) interferograms, from raw images to calibrated wavelengths, refractive index determination, optical thickness reconstruction, and separation analysis.
 
 The repository combines:
 
 - MMVII-based fringe detection
 - Mercury-line wavelength calibration
 - Pixel-to-wavelength conversion
-- Fringe tracking through time
+- Per-frame fringe tracking
 - Refractive index (RI) estimation
 - Optical thickness (OT) computation
 - Separation profile extraction
@@ -19,12 +19,12 @@ The repository combines:
 # Features
 
 - Automated fringe extraction using MMVII
-- Support for calibration using mercury emission lines
+- Calibration using mercury emission lines
 - Parallel processing of large image sequences
 - Conversion from fringe position (pixels) to wavelength (Å)
+- Per-frame fringe tracking
 - RI estimation from three-layer interferometry
 - Optical thickness and separation reconstruction
-- Processing of all Y positions or selected Y ranges
 - Frame-range filtering for targeted analysis
 
 ---
@@ -33,7 +33,7 @@ The repository combines:
 
 ## Software
 
-- [MMVII](https://github.com/micmac-V2/MMVII)
+- MMVII
 - Python ≥ 3.9
 
 ## Python Packages
@@ -59,7 +59,7 @@ Mercury calibration
 Pixel → wavelength conversion
           │
           ▼
-Fringe tracking through time
+Per-frame wavelength files
           │
           ▼
 Mean wavelength extraction
@@ -71,7 +71,7 @@ Refractive index reconstruction
 Optical thickness reconstruction
           │
           ▼
-Separation / force analysis
+Separation analysis
 ```
 
 ---
@@ -91,13 +91,10 @@ project_root/
 ├── mean_x.py
 ├── p2w.py
 ├── p2w_para.sh
-├── merge_p2w.py
 ├── mean_p2w.py
 │
+├── ri_ot.py
 ├── run_all.sh
-├── run_triplets.sh
-├── run_one_triplet.sh
-├── p2w_thickness.py
 │
 └── README.md
 ```
@@ -112,24 +109,24 @@ project_root/
 
 ```text
 calibration_gy/
-└── Retiga.000000001.tif
+└── Retiga_000000001.tif
 ```
 
-### Green Mercury Ray Only (Optional)
+### Green Mercury Ray Only
 
 ```text
 calibration_g/
-└── Retiga.000000001.tif
+└── Retiga_000000001.tif
 ```
 
 ## Fringe Calibration
 
 ```text
 calibration_p/
-└── Retiga.000000001.tif
+└── Retiga_000000001.tif
 ```
 
-For RI analysis, the image should contain at least:
+The calibration image must contain at least:
 
 ```text
 p
@@ -143,7 +140,7 @@ fringes.
 
 ```text
 video/
-└── Retiga.*.tif
+└── Retiga_*.tif
 ```
 
 ---
@@ -160,24 +157,11 @@ MMVII ExtractFranges Retiga_000000001.tif \
     MinHeightBorderRight=0
 ```
 
-Outputs:
-
-```text
-calibration_gy/MMVII-PhgrProj/Reports/ExtractFranges/
-calibration_g/MMVII-PhgrProj/Reports/ExtractFranges/
-```
-
 ## Fringe Calibration
 
 ```bash
 MMVII ExtractFranges Retiga_000000001.tif \
     "IntY=[980,1220]"
-```
-
-Output:
-
-```text
-calibration_p/MMVII-PhgrProj/Reports/ExtractFranges/
 ```
 
 ## Video Processing
@@ -202,7 +186,7 @@ python3 mean_x.py calibration_g 1100 20
 where:
 
 - 1100 = Y center
-- 20 = averaging width
+- 20 = averaging half-width
 
 ---
 
@@ -211,31 +195,50 @@ where:
 ## Calibration Fringes
 
 ```bash
-p2w_para.sh ./calibration_p 1 1
-python3 merge_p2w.py ./calibration_p
+bash p2w_para.sh ./calibration_p 1 1
 ```
 
 ## Video
 
 ```bash
-p2w_para.sh ./video 0 9999 8
-python3 merge_p2w.py ./video
+bash p2w_para.sh ./video 1 9999 8 5
+```
+
+Output structure:
+
+```text
+video/p2w/
+├── p-0/
+│   ├── p2w_p-0_000000001.csv
+│   ├── p2w_p-0_000000002.csv
+│   └── ...
+├── p-1/
+├── p-2/
+└── ...
+```
+
+Each file contains:
+
+```text
+Y,pos_pix,pos_lambda
+```
+
+One file corresponds to one frame and one fringe label.
+
+---
+
+# Mean Wavelength Extraction
+
+```bash
+python3 mean_p2w.py ./calibration_p 1100 20
+
+python3 mean_p2w.py ./radius_spot1_free_evap_part2_2000_2500 1100 20
 ```
 
 Output:
 
 ```text
-video/p2w/
-├── p-0/
-├── p-1/
-├── p-2/
-└── p-3/
-```
-
-Example file:
-
-```text
-p2w_p-3_981.csv
+mean_p-3_1100_20.csv
 ```
 
 Columns:
@@ -246,41 +249,26 @@ frame,pos_pix,pos_lambda
 
 ---
 
-# Mean Wavelength Extraction
-
-```bash
-python3 mean_p2w.py ./calibration_p 1100 20
-
-python3 mean_p2w.py \
-    ./radius_spot1_free_evap_part2_2000_2500 \
-    1100 20
-```
-
-Example output:
-
-```text
-mean_p-3_1100_20.csv
-```
-
----
-
 # Refractive Index and Optical Thickness Analysis
 
-The algorithm uses consecutive parity triplets:
+Measured data are processed as:
 
 ```text
-(p-0,p-1,p-2)
-(p-1,p-2,p-3)
-(p-2,p-3,p-4)
-...
+(p-i,p-(i+1))
+```
+
+Calibration data are read from:
+
+```text
+(p-i,p-(i+1),p-(i+2))
 ```
 
 For each frame:
 
-1. Read calibration wavelengths.
-2. Read measured wavelengths.
+1. Read the two measured fringe files.
+2. Read the three calibration mean files.
 3. Generate a refractive-index search grid.
-4. Evaluate parity equations.
+4. Evaluate the parity equations.
 5. Detect the first sign change.
 6. Estimate refractive index.
 7. Compute optical thickness.
@@ -290,35 +278,34 @@ For each frame:
 
 # Running the Analysis
 
-## All Y Positions
-
 ```bash
 ./run_all.sh \
     --input-dir radius_spot1_free_evap_part2_2000_2500
 ```
 
-## Single Y Position
-
-```bash
-./run_triplets.sh \
-    --input-dir radius_spot1_free_evap_part2_2000_2500 \
-    --Y 1100 \
-    --jobs 18
-```
-
-## Full Example
+Restrict frame range:
 
 ```bash
 ./run_all.sh \
     --input-dir radius_spot1_free_evap_part2_2000_2500 \
-    --jobs 18 \
-    --mul-start 0.5 \
-    --mul-stop 1.5 \
-    --mul-step 0.001 \
-    --y-start 1050 \
-    --y-end 1150 \
     --frame-start 2000 \
     --frame-end 2025
+```
+
+Restrict maximum fringe:
+
+```bash
+./run_all.sh \
+    --input-dir radius_spot1_free_evap_part2_2000_2500 \
+    --max-fringe 3
+```
+
+This uses p-0 through p-3 inclusive and computes:
+
+```text
+p-0_p-1
+p-1_p-2
+p-2_p-3
 ```
 
 ---
@@ -328,20 +315,18 @@ For each frame:
 ```text
 <input-dir>/ri/
 ├── p-0_p-1/
-│   ├── ri_p-0_p-1_1050.csv
+│   ├── ri_p-0_p-1_000000001.csv
+│   ├── ri_p-0_p-1_000000002.csv
 │   └── ...
 ├── p-1_p-2/
-└── p-2_p-3/
+├── p-2_p-3/
+└── ...
 ```
 
-Each CSV contains:
+Each file contains:
 
 ```text
-frame
-pos_pix
-op_thi
-sep
-ref_in
+frame,Y,pos_pix,op_thi,sep,ref_in
 ```
 
 ---
@@ -362,40 +347,42 @@ and
 sep = op_thi / (10 × RI)
 ```
 
-Frames without a valid crossing are assigned NaN values.
+Rows without a valid crossing are assigned NaN values.
 
 ---
 
 # Troubleshooting
 
-## No Y files found
+## No frame files found
 
-Verify that files are named:
+Verify that:
 
 ```text
-p2w_p-0_<Y>.csv
+p2w/p-0/p2w_p-0_000000001.csv
 ```
 
-## Need at least 3 parity directories
+exists.
 
-The following must exist:
+## Need at least 2 fringe directories
+
+The measured dataset must contain:
 
 ```text
 p-0
 p-1
-p-2
 ```
 
-## No measured p2w file found
+For pair p-i_p-(i+1), calibration files must also exist for:
 
-A Y file is missing in one or more parity folders.
-
-## No frames left after applying frame range
-
-The selected frame interval does not overlap the available data.
+```text
+p-i
+p-(i+1)
+p-(i+2)
+```
 
 ---
 
 # Citation
 
-If you use InterfeRIOT in published work, please cite the associated Surface Force Balance methodology and indicate the repository version used for analysis.
+If you use InterfeRIOT in published work, please cite the associated paper ["Optical mapping of phases and phase boundaries in nanoconfined fluids"][ 	
+https://doi.org/10.48550/arXiv.2606.24809] and indicate the repository version used for analysis.
