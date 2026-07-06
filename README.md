@@ -279,14 +279,14 @@ For each frame:
 # Running the Analysis
 
 ```bash
-./run_all.sh \
+./lets_riot.sh \
     --input-dir radius_spot1_free_evap_part2_2000_2500
 ```
 
 Restrict frame range:
 
 ```bash
-./run_all.sh \
+./lets_riot.sh \
     --input-dir radius_spot1_free_evap_part2_2000_2500 \
     --frame-start 2000 \
     --frame-end 2025
@@ -295,7 +295,7 @@ Restrict frame range:
 Restrict maximum fringe:
 
 ```bash
-./run_all.sh \
+./lets_riot.sh \
     --input-dir radius_spot1_free_evap_part2_2000_2500 \
     --max-fringe 3
 ```
