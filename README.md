@@ -171,7 +171,11 @@ source extractfranges.sh
 
 cd video
 
-run_toto_parallel -j 16 --arg 'IntY=[980,1220]'
+run_toto_parallel -j 4 --from 1 --to 20 \
+  --arg 'IntY=[980,1220]' \
+  --arg 'MinWidth=0' \
+  --arg 'BorderMinWidth=0' \
+  --arg 'MinHeightBorderRight=0'
 ```
 
 ---
