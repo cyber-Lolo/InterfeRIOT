@@ -25,7 +25,6 @@ def pix2wave(old_gy: Path, new_gy: Path, pix: pd.Series) -> pd.Series:
 
     pg = df_g[df_g["Label"] == 0].iloc[0, 1]
     py = pg - df_gy[df_gy["Label"] == 0].iloc[0, 1] + df_gy[df_gy["Label"] == 2].iloc[0, 1]
-    #py = df_gy[df_gy["Label"] == 0].iloc[0, 1]-pg + df_gy[df_gy["Label"] == 2].iloc[0, 1]
     print(pg,py)
     return lg + (pix - pg) * (ly - lg) / (py - pg)
 
